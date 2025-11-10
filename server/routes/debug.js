@@ -1,6 +1,5 @@
 import express from "express";
 import pool from "../config/database.js";
-import bcrypt from "bcryptjs";
 
 const router = express.Router();
 
@@ -12,7 +11,7 @@ router.get("/check-user/:username", async (req, res) => {
     console.log(`\n🔍 [DEBUG] Verificando usuário: ${username}`);
 
     const result = await pool.query(
-      "SELECT id, username, email, role, is_active, password_hash, created_at FROM users WHERE username = $1",
+      "SELECT id, username, email, role, is_active, password, created_at FROM users WHERE username = $1",
       [username]
     );
 
@@ -31,8 +30,7 @@ router.get("/check-user/:username", async (req, res) => {
     console.log(`   Email: ${user.email}`);
     console.log(`   Role: ${user.role}`);
     console.log(`   Is Active: ${user.is_active}`);
-    console.log(`   Hash Length: ${user.password_hash.length} caracteres`);
-    console.log(`   Hash Format Valid: ${user.password_hash.startsWith("$2")}`);
+    console.log(`   Password: ${user.password ? "***" : "NULL"}`);
 
     res.json({
       found: true,
@@ -42,8 +40,7 @@ router.get("/check-user/:username", async (req, res) => {
         email: user.email,
         role: user.role,
         is_active: user.is_active,
-        password_hash_length: user.password_hash.length,
-        password_hash_valid: user.password_hash.startsWith("$2"),
+        has_password: !!user.password,
         created_at: user.created_at,
       },
     });
@@ -63,7 +60,7 @@ router.post("/test-password", async (req, res) => {
     console.log(`   Password length: ${password.length}`);
 
     const result = await pool.query(
-      "SELECT password_hash FROM users WHERE username = $1",
+      "SELECT password FROM users WHERE username = $1",
       [username]
     );
 
@@ -72,18 +69,16 @@ router.post("/test-password", async (req, res) => {
       return res.json({ match: false, reason: "Usuário não encontrado" });
     }
 
-    const hash = result.rows[0].password_hash;
-    console.log(`   Hash length: ${hash.length}`);
-    console.log(`   Hash format valid: ${hash.startsWith("$2")}`);
+    const userPassword = result.rows[0].password;
+    console.log(`   Password no banco: ${userPassword ? "***" : "NULL"}`);
 
-    const match = await bcrypt.compare(password, hash);
-    console.log(`   Bcrypt compare resultado: ${match}`);
+    const match = password === userPassword;
+    console.log(`   Comparação resultado: ${match}`);
 
     res.json({
       match,
       passwordLength: password.length,
-      hashLength: hash.length,
-      hashValid: hash.startsWith("$2"),
+      passwordInDB: !!userPassword,
     });
   } catch (error) {
     console.error(`❌ [DEBUG] Erro:`, error.message);

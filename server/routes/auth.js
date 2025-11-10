@@ -1,5 +1,4 @@
 import express from "express";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { body, validationResult } from "express-validator";
 import pool from "../config/database.js";
@@ -73,32 +72,24 @@ router.post(
       console.log(`   Email: ${user.email}`);
       console.log(`   Role: ${user.role}`);
       console.log(`   Is Active: ${user.is_active}`);
+
+      // Verificar senha (comparação direta - SEM HASH)
+      console.log(`\n7️⃣  [LOGIN] Verificando senha...`);
+      console.log(`   Password recebido: ${password.length} caracteres`);
       console.log(
-        `   Password Hash Length: ${user.password_hash.length} caracteres`
+        `   Password no banco: ${
+          user.password ? user.password.length + " caracteres" : "NULL"
+        }`
       );
+      console.log(`   Método: Comparação direta (texto puro)`);
 
-      // Verificar senha
-      console.log(`\n7️⃣  [LOGIN] Iniciando verificação de senha com bcrypt...`);
-      console.log(`   Password length: ${password.length} caracteres`);
-      console.log(`   Algoritmo: bcrypt`);
-
-      let isValidPassword;
-      try {
-        isValidPassword = await bcrypt.compare(password, user.password_hash);
-        console.log(`8️⃣  [LOGIN] Bcrypt compare resultado: ${isValidPassword}`);
-      } catch (bcryptError) {
-        console.error(`❌ [LOGIN] Erro no bcrypt.compare:`);
-        console.error(`   Tipo: ${bcryptError.name}`);
-        console.error(`   Mensagem: ${bcryptError.message}`);
-        throw bcryptError;
-      }
+      const isValidPassword = password === user.password;
+      console.log(`8️⃣  [LOGIN] Senhas coincidem: ${isValidPassword}`);
 
       if (!isValidPassword) {
-        console.log(`\n❌ [LOGIN FALHOU] Motivo: Senha inválida`);
+        console.log(`\n❌ [LOGIN FALHOU] Motivo: Senha não coincide`);
         console.log(`   Username: ${username}`);
-        console.log(
-          `   Sugestão: Verifique se a senha está correta ou recrie o usuário`
-        );
+        console.log(`   Senha esperada: admin123`);
         console.log("🔐".repeat(40) + "\n");
         return res.status(401).json({ error: "Credenciais inválidas" });
       }
@@ -261,7 +252,7 @@ router.post(
 
       // Buscar usuário
       const result = await pool.query(
-        "SELECT password_hash FROM users WHERE id = $1",
+        "SELECT password FROM users WHERE id = $1",
         [req.user.id]
       );
 
@@ -271,23 +262,14 @@ router.post(
 
       const user = result.rows[0];
 
-      // Verificar senha atual
-      const isValidPassword = await bcrypt.compare(
-        currentPassword,
-        user.password_hash
-      );
-
-      if (!isValidPassword) {
+      // Verificar senha atual (comparação direta)
+      if (currentPassword !== user.password) {
         return res.status(401).json({ error: "Senha atual incorreta" });
       }
 
-      // Hash da nova senha
-      const saltRounds = 10;
-      const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
-
-      // Atualizar senha
-      await pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [
-        newPasswordHash,
+      // Atualizar senha (texto puro)
+      await pool.query("UPDATE users SET password = $1 WHERE id = $2", [
+        newPassword,
         req.user.id,
       ]);
 

@@ -1,5 +1,4 @@
 import pool from "../config/database.js";
-import bcrypt from "bcryptjs";
 
 async function setup() {
   console.log("\n" + "=".repeat(60));
@@ -28,7 +27,7 @@ async function setup() {
             id SERIAL PRIMARY KEY,
             username VARCHAR(50) UNIQUE NOT NULL,
             email VARCHAR(255) UNIQUE NOT NULL,
-            password_hash VARCHAR(255) NOT NULL,
+            password VARCHAR(255) NOT NULL,
             role VARCHAR(20) DEFAULT 'user',
             is_active BOOLEAN DEFAULT true,
             last_login TIMESTAMP,
@@ -37,7 +36,7 @@ async function setup() {
           )
         `);
 
-        console.log("   ✅ Tabela 'users' criada\n");
+        console.log("   ✅ Tabela 'users' criada (senha em texto puro)\n");
       } else {
         throw err;
       }
@@ -51,7 +50,14 @@ async function setup() {
     );
 
     if (existingUser.rows.length > 0) {
-      console.log("   ✅ Usuário admin já existe");
+      console.log("   ⚠️  Usuário admin já existe. Atualizando senha...");
+
+      await pool.query("UPDATE users SET password = $1 WHERE username = $2", [
+        "admin123",
+        "admin",
+      ]);
+
+      console.log("   ✅ Senha atualizada para 'admin123'");
       console.log(`      ID: ${existingUser.rows[0].id}`);
       console.log(`      Email: ${existingUser.rows[0].email}`);
       console.log(`      Role: ${existingUser.rows[0].role}\n`);
@@ -59,12 +65,11 @@ async function setup() {
       console.log("   ⚠️  Usuário admin não existe. Criando...");
 
       const password = "admin123";
-      const passwordHash = await bcrypt.hash(password, 10);
 
       await pool.query(
-        `INSERT INTO users (username, email, password_hash, role) 
+        `INSERT INTO users (username, email, password, role) 
          VALUES ($1, $2, $3, $4)`,
-        ["admin", "admin@warehouse.com", passwordHash, "admin"]
+        ["admin", "admin@warehouse.com", password, "admin"]
       );
 
       console.log("   ✅ Usuário admin criado:");

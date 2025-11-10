@@ -1,15 +1,10 @@
-import bcrypt from "bcryptjs";
 import pool from "../config/database.js";
 
 async function seedAdmin() {
   try {
     const username = "admin";
     const email = "admin@warehouse.com";
-    const password = "admin123"; // Senha padrão - DEVE SER ALTERADA!
-
-    // Hash da senha
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+    const password = "admin123"; // Senha em texto puro
 
     // Verificar se usuário já existe
     const existingUser = await pool.query(
@@ -19,21 +14,32 @@ async function seedAdmin() {
 
     if (existingUser.rows.length > 0) {
       console.log("✅ Usuário admin já existe");
+      console.log("   Atualizando senha para 'admin123'...");
+
+      // Atualizar senha
+      await pool.query("UPDATE users SET password = $1 WHERE username = $2", [
+        password,
+        username,
+      ]);
+      console.log("✅ Senha atualizada!");
+      process.exit(0);
       return;
     }
 
     // Criar usuário admin
     await pool.query(
-      `INSERT INTO users (username, email, password_hash, role) 
+      `INSERT INTO users (username, email, password, role) 
        VALUES ($1, $2, $3, $4)`,
-      [username, email, passwordHash, "admin"]
+      [username, email, password, "admin"]
     );
 
     console.log("✅ Usuário admin criado com sucesso!");
     console.log(`   Username: ${username}`);
     console.log(`   Email: ${email}`);
     console.log(`   Password: ${password}`);
-    console.log("\n⚠️  IMPORTANTE: Altere a senha padrão em produção!");
+    console.log(
+      "\n⚠️  ATENÇÃO: Senha em texto puro (não recomendado para produção)!"
+    );
 
     process.exit(0);
   } catch (error) {

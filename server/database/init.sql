@@ -1,5 +1,28 @@
 -- Database Schema para Sistema de Controle de Escala Warehouse
 
+-- Tabela de Usuários (Autenticação)
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) DEFAULT 'user',
+    is_active BOOLEAN DEFAULT true,
+    last_login TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índices para users
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+
+-- Inserir usuário admin padrão
+INSERT INTO users (username, email, password, role) VALUES
+    ('admin', 'admin@warehouse.com', 'admin123', 'admin')
+ON CONFLICT (username) DO NOTHING;
+
 -- Tabela de Funcionários
 CREATE TABLE IF NOT EXISTS employees (
     id SERIAL PRIMARY KEY,
