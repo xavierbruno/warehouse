@@ -32,23 +32,33 @@ router.post(
     console.log("\n" + "🔐".repeat(40));
     console.log(`[${new Date().toISOString()}] INÍCIO DO PROCESSO DE LOGIN`);
     console.log("🔐".repeat(40));
-    
+
     try {
       const { username, password } = req.body;
       console.log(`1️⃣  [LOGIN] Username recebido: "${username}"`);
-      console.log(`2️⃣  [LOGIN] Password recebido: ${password ? '***' + password.length + ' caracteres***' : 'VAZIO'}`);
-      console.log(`3️⃣  [LOGIN] Password exato esperado: "admin123" (12 caracteres)`);
+      console.log(
+        `2️⃣  [LOGIN] Password recebido: ${
+          password ? "***" + password.length + " caracteres***" : "VAZIO"
+        }`
+      );
+      console.log(
+        `3️⃣  [LOGIN] Password exato esperado: "admin123" (12 caracteres)`
+      );
 
       // Buscar usuário
       console.log(`\n4️⃣  [LOGIN] Executando query no banco de dados...`);
-      console.log(`   Query: SELECT * FROM users WHERE username = '${username}' AND is_active = true`);
-      
+      console.log(
+        `   Query: SELECT * FROM users WHERE username = '${username}' AND is_active = true`
+      );
+
       const result = await pool.query(
         "SELECT * FROM users WHERE username = $1 AND is_active = true",
         [username]
       );
-      
-      console.log(`5️⃣  [LOGIN] Resultado: ${result.rows.length} usuário(s) encontrado(s)`);
+
+      console.log(
+        `5️⃣  [LOGIN] Resultado: ${result.rows.length} usuário(s) encontrado(s)`
+      );
 
       if (result.rows.length === 0) {
         console.log(`\n❌ [LOGIN FALHOU] Motivo: Usuário não encontrado`);
@@ -65,15 +75,19 @@ router.post(
       console.log(`   Email: ${user.email}`);
       console.log(`   Role: ${user.role}`);
       console.log(`   Is Active: ${user.is_active}`);
-      console.log(`   Password Hash: ${user.password_hash.substring(0, 20)}...`);
+      console.log(
+        `   Password Hash: ${user.password_hash.substring(0, 20)}...`
+      );
       console.log(`   Hash Length: ${user.password_hash.length} caracteres`);
 
       // Verificar senha
       console.log(`\n7️⃣  [LOGIN] Iniciando verificação de senha com bcrypt...`);
       console.log(`   Password fornecido: ${password}`);
-      console.log(`   Hash do banco: ${user.password_hash.substring(0, 30)}...`);
+      console.log(
+        `   Hash do banco: ${user.password_hash.substring(0, 30)}...`
+      );
       console.log(`   Algoritmo: bcrypt`);
-      
+
       let isValidPassword;
       try {
         isValidPassword = await bcrypt.compare(password, user.password_hash);
@@ -90,11 +104,13 @@ router.post(
         console.log(`   Username: ${username}`);
         console.log(`   Password fornecido: ${password}`);
         console.log(`   Password esperado: admin123`);
-        console.log(`   Hash no banco: ${user.password_hash.substring(0, 30)}...`);
+        console.log(
+          `   Hash no banco: ${user.password_hash.substring(0, 30)}...`
+        );
         console.log("🔐".repeat(40) + "\n");
         return res.status(401).json({ error: "Credenciais inválidas" });
       }
-      
+
       console.log(`✅ [LOGIN] Senha validada com sucesso!`);
 
       // Atualizar last_login
@@ -105,15 +121,20 @@ router.post(
         ]);
         console.log(`✅ [LOGIN] Last_login atualizado`);
       } catch (updateError) {
-        console.error(`⚠️  [LOGIN] Erro ao atualizar last_login (não crítico):`, updateError.message);
+        console.error(
+          `⚠️  [LOGIN] Erro ao atualizar last_login (não crítico):`,
+          updateError.message
+        );
       }
 
       // Gerar token JWT
       console.log(`\n🔟 [LOGIN] Gerando token JWT...`);
-      console.log(`   JWT_SECRET configurado: ${JWT_SECRET ? 'Sim' : 'NÃO!'}`);
+      console.log(`   JWT_SECRET configurado: ${JWT_SECRET ? "Sim" : "NÃO!"}`);
       console.log(`   JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}`);
-      console.log(`   Payload: { id: ${user.id}, username: ${user.username}, role: ${user.role} }`);
-      
+      console.log(
+        `   Payload: { id: ${user.id}, username: ${user.username}, role: ${user.role} }`
+      );
+
       let token;
       try {
         token = jwt.sign(
@@ -127,7 +148,9 @@ router.post(
           { expiresIn: JWT_EXPIRES_IN }
         );
         console.log(`✅ [LOGIN] Token JWT gerado com sucesso`);
-        console.log(`   Token (primeiros 50 chars): ${token.substring(0, 50)}...`);
+        console.log(
+          `   Token (primeiros 50 chars): ${token.substring(0, 50)}...`
+        );
       } catch (jwtError) {
         console.error(`❌ [LOGIN] Erro ao gerar JWT:`);
         console.error(`   Tipo: ${jwtError.name}`);
@@ -153,12 +176,12 @@ router.post(
           last_login: user.last_login,
         },
       };
-      
+
       console.log(`📤 [LOGIN] Enviando resposta de sucesso:`, {
-        token: token.substring(0, 20) + '...',
-        user: response.user
+        token: token.substring(0, 20) + "...",
+        user: response.user,
       });
-      
+
       res.json(response);
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -168,39 +191,43 @@ router.post(
       console.error(`⏱️  Tempo até o erro: ${duration}ms`);
       console.error(`🏷️  Tipo do erro: ${error.name}`);
       console.error(`💬 Mensagem: ${error.message}`);
-      
+
       if (error.code) {
         console.error(`🔢 Código do erro: ${error.code}`);
-        
+
         // Mensagens específicas por código
-        switch(error.code) {
-          case '42P01':
+        switch (error.code) {
+          case "42P01":
             console.error(`📋 Significado: Tabela não existe`);
-            console.error(`🔧 Solução: Execute "npm run setup" no console do backend`);
+            console.error(
+              `🔧 Solução: Execute "npm run setup" no console do backend`
+            );
             break;
-          case '28P01':
+          case "28P01":
             console.error(`📋 Significado: Autenticação com PostgreSQL falhou`);
             console.error(`🔧 Solução: Verifique DB_USER e DB_PASSWORD`);
             break;
-          case 'ECONNREFUSED':
+          case "ECONNREFUSED":
             console.error(`📋 Significado: PostgreSQL não está acessível`);
-            console.error(`🔧 Solução: Verifique se container postgres está rodando`);
+            console.error(
+              `🔧 Solução: Verifique se container postgres está rodando`
+            );
             break;
           default:
             console.error(`📋 Código desconhecido: ${error.code}`);
         }
       }
-      
+
       console.error(`\n📚 Stack trace completo:`);
       console.error(error.stack);
       console.error("❌".repeat(40) + "\n");
-      
-      res.status(500).json({ 
+
+      res.status(500).json({
         error: "Erro ao fazer login",
-        ...(process.env.NODE_ENV === "development" && { 
+        ...(process.env.NODE_ENV === "development" && {
           details: error.message,
-          code: error.code 
-        })
+          code: error.code,
+        }),
       });
     }
   }
