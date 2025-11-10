@@ -1,0 +1,81 @@
+-- Database Schema para Sistema de Controle de Escala Warehouse
+
+-- Tabela de Funcionários
+CREATE TABLE IF NOT EXISTS employees (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    department VARCHAR(100),
+    position VARCHAR(100),
+    hire_date DATE,
+    hourly_rate DECIMAL(10, 2),
+    email VARCHAR(255),
+    phone VARCHAR(20),
+    status VARCHAR(20) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de Escalas (Schedules)
+CREATE TABLE IF NOT EXISTS schedules (
+    id SERIAL PRIMARY KEY,
+    employee_id INTEGER NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    week_key VARCHAR(50) NOT NULL,
+    day_key VARCHAR(20) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    break_minutes INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de Pagamentos (para tracking)
+CREATE TABLE IF NOT EXISTS payments (
+    id SERIAL PRIMARY KEY,
+    employee_id INTEGER NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    week_key VARCHAR(50) NOT NULL,
+    total_hours DECIMAL(10, 2) NOT NULL,
+    hourly_rate DECIMAL(10, 2) NOT NULL,
+    total_amount DECIMAL(10, 2) NOT NULL,
+    payment_date DATE,
+    status VARCHAR(20) DEFAULT 'pending',
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índices para melhor performance
+CREATE INDEX IF NOT EXISTS idx_employees_status ON employees(status);
+CREATE INDEX IF NOT EXISTS idx_employees_department ON employees(department);
+CREATE INDEX IF NOT EXISTS idx_schedules_employee_id ON schedules(employee_id);
+CREATE INDEX IF NOT EXISTS idx_schedules_week_key ON schedules(week_key);
+CREATE INDEX IF NOT EXISTS idx_schedules_day_key ON schedules(day_key);
+CREATE INDEX IF NOT EXISTS idx_payments_employee_id ON payments(employee_id);
+CREATE INDEX IF NOT EXISTS idx_payments_week_key ON payments(week_key);
+
+-- Função para atualizar updated_at automaticamente
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Triggers para atualizar updated_at
+CREATE TRIGGER update_employees_updated_at BEFORE UPDATE ON employees
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_schedules_updated_at BEFORE UPDATE ON schedules
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON payments
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Dados de exemplo (opcional)
+INSERT INTO employees (name, department, position, hire_date, hourly_rate, email, phone, status) VALUES
+    ('João Silva', 'Warehouse', 'Operator', '2023-01-15', 25.50, 'joao.silva@example.com', '(11) 98765-4321', 'active'),
+    ('Maria Santos', 'Warehouse', 'Supervisor', '2022-06-10', 32.00, 'maria.santos@example.com', '(11) 98765-4322', 'active'),
+    ('Pedro Costa', 'Logistics', 'Coordinator', '2023-03-20', 28.75, 'pedro.costa@example.com', '(11) 98765-4323', 'active')
+ON CONFLICT DO NOTHING;
+

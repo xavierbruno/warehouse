@@ -12,6 +12,10 @@ RUN npm ci
 # Copia o código fonte
 COPY . .
 
+# Build argument para API URL
+ARG VITE_API_URL=http://localhost:5000/api
+ENV VITE_API_URL=$VITE_API_URL
+
 # Build da aplicação
 RUN npm run build
 

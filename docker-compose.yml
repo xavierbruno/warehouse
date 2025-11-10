@@ -1,6 +1,53 @@
 version: "3.8"
 
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: warehouse-postgres
+    environment:
+      POSTGRES_DB: warehouse_db
+      POSTGRES_USER: warehouse_user
+      POSTGRES_PASSWORD: warehouse_pass_2024
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - warehouse-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warehouse_user -d warehouse_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: warehouse-backend
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: warehouse_db
+      DB_USER: warehouse_user
+      DB_PASSWORD: warehouse_pass_2024
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - warehouse-network
+    restart: unless-stopped
+
+  # Frontend (Produção)
   warehouse-app:
     build:
       context: .
@@ -11,10 +58,13 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      - VITE_API_URL=http://localhost:5000/api
+    depends_on:
+      - backend
     networks:
       - warehouse-network
 
-  # Opcional: Serviço de desenvolvimento com hot-reload
+  # Frontend (Desenvolvimento) - Opcional
   warehouse-dev:
     image: node:18-alpine
     container_name: warehouse-dev
@@ -27,10 +77,15 @@ services:
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     environment:
       - NODE_ENV=development
+      - VITE_API_URL=http://localhost:5000/api
     networks:
       - warehouse-network
     profiles:
       - dev
+
+volumes:
+  postgres_data:
+    driver: local
 
 networks:
   warehouse-network:

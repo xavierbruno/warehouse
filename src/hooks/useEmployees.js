@@ -1,64 +1,71 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { employeesAPI } from "../utils/api";
 
 export const useEmployees = () => {
   const [employees, setEmployees] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const isInitialLoad = useRef(true);
+  const [error, setError] = useState(null);
 
-  // Carregar funcionários do localStorage
+  // Carregar funcionários da API
   useEffect(() => {
-    const loadEmployees = () => {
-      try {
-        const savedEmployees = localStorage.getItem("warehouse-employees");
-        if (savedEmployees) {
-          const parsedEmployees = JSON.parse(savedEmployees);
-          setEmployees(parsedEmployees);
-        }
-      } catch (error) {
-        console.error("Erro ao carregar funcionários:", error);
-        setEmployees([]);
-      } finally {
-        setIsLoading(false);
-        isInitialLoad.current = false;
-      }
-    };
-
     loadEmployees();
   }, []);
 
-  // Salvar funcionários no localStorage
-  useEffect(() => {
-    if (!isInitialLoad.current && !isLoading) {
+  const loadEmployees = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await employeesAPI.getAll();
+      setEmployees(data);
+    } catch (err) {
+      console.error("Erro ao carregar funcionários:", err);
+      setError(err.message);
+      // Fallback para localStorage em caso de erro
       try {
-        localStorage.setItem("warehouse-employees", JSON.stringify(employees));
-      } catch (error) {
-        console.error("Erro ao salvar funcionários:", error);
+        const savedEmployees = localStorage.getItem("warehouse-employees");
+        if (savedEmployees) {
+          setEmployees(JSON.parse(savedEmployees));
+        }
+      } catch (localErr) {
+        console.error("Erro ao carregar do localStorage:", localErr);
       }
+    } finally {
+      setIsLoading(false);
     }
-  }, [employees, isLoading]);
-
-  const addEmployee = (employee) => {
-    const newEmployee = {
-      ...employee,
-      id: Date.now(),
-      createdAt: new Date().toISOString(),
-    };
-    setEmployees((prev) => [...prev, newEmployee]);
-    return newEmployee;
   };
 
-  const deleteEmployee = (id) => {
-    setEmployees((prev) => prev.filter((emp) => emp.id !== id));
+  const addEmployee = async (employee) => {
+    try {
+      const newEmployee = await employeesAPI.create(employee);
+      setEmployees((prev) => [...prev, newEmployee]);
+      return newEmployee;
+    } catch (err) {
+      console.error("Erro ao adicionar funcionário:", err);
+      throw err;
+    }
   };
 
-  const updateEmployee = (id, updatedData) => {
-    setEmployees((prev) =>
-      prev.map((emp) =>
-        emp.id === parseInt(id)
-          ? { ...emp, ...updatedData, updatedAt: new Date().toISOString() }
-          : emp
-      )
-    );
+  const deleteEmployee = async (id) => {
+    try {
+      await employeesAPI.delete(id);
+      setEmployees((prev) => prev.filter((emp) => emp.id !== id));
+    } catch (err) {
+      console.error("Erro ao deletar funcionário:", err);
+      throw err;
+    }
+  };
+
+  const updateEmployee = async (id, updatedData) => {
+    try {
+      const updated = await employeesAPI.update(id, updatedData);
+      setEmployees((prev) =>
+        prev.map((emp) => (emp.id === parseInt(id) ? updated : emp))
+      );
+      return updated;
+    } catch (err) {
+      console.error("Erro ao atualizar funcionário:", err);
+      throw err;
+    }
   };
 
   const getEmployeeById = (id) => {
@@ -68,10 +75,12 @@ export const useEmployees = () => {
   return {
     employees,
     isLoading,
+    error,
     addEmployee,
     deleteEmployee,
     updateEmployee,
     getEmployeeById,
     setEmployees,
+    refreshEmployees: loadEmployees,
   };
 };
