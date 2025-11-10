@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  warehouse-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: warehouse-schedule-system
+    ports:
+      - "3333:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - warehouse-network
+
+  # Opcional: Serviço de desenvolvimento com hot-reload
+  warehouse-dev:
+    image: node:18-alpine
+    container_name: warehouse-dev
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "3001:3000"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    environment:
+      - NODE_ENV=development
+    networks:
+      - warehouse-network
+    profiles:
+      - dev
+
+networks:
+  warehouse-network:
+    driver: bridge
