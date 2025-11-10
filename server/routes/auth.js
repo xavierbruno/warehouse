@@ -38,12 +38,10 @@ router.post(
       console.log(`1️⃣  [LOGIN] Username recebido: "${username}"`);
       console.log(
         `2️⃣  [LOGIN] Password recebido: ${
-          password ? "***" + password.length + " caracteres***" : "VAZIO"
+          password ? "*** (" + password.length + " caracteres)" : "VAZIO"
         }`
       );
-      console.log(
-        `3️⃣  [LOGIN] Password exato esperado: "admin123" (12 caracteres)`
-      );
+      console.log(`3️⃣  [LOGIN] Password esperado para admin: 8 caracteres`);
 
       // Buscar usuário
       console.log(`\n4️⃣  [LOGIN] Executando query no banco de dados...`);
@@ -76,16 +74,12 @@ router.post(
       console.log(`   Role: ${user.role}`);
       console.log(`   Is Active: ${user.is_active}`);
       console.log(
-        `   Password Hash: ${user.password_hash.substring(0, 20)}...`
+        `   Password Hash Length: ${user.password_hash.length} caracteres`
       );
-      console.log(`   Hash Length: ${user.password_hash.length} caracteres`);
 
       // Verificar senha
       console.log(`\n7️⃣  [LOGIN] Iniciando verificação de senha com bcrypt...`);
-      console.log(`   Password fornecido: ${password}`);
-      console.log(
-        `   Hash do banco: ${user.password_hash.substring(0, 30)}...`
-      );
+      console.log(`   Password length: ${password.length} caracteres`);
       console.log(`   Algoritmo: bcrypt`);
 
       let isValidPassword;
@@ -102,10 +96,8 @@ router.post(
       if (!isValidPassword) {
         console.log(`\n❌ [LOGIN FALHOU] Motivo: Senha inválida`);
         console.log(`   Username: ${username}`);
-        console.log(`   Password fornecido: ${password}`);
-        console.log(`   Password esperado: admin123`);
         console.log(
-          `   Hash no banco: ${user.password_hash.substring(0, 30)}...`
+          `   Sugestão: Verifique se a senha está correta ou recrie o usuário`
         );
         console.log("🔐".repeat(40) + "\n");
         return res.status(401).json({ error: "Credenciais inválidas" });

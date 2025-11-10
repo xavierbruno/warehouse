@@ -8,22 +8,22 @@ const router = express.Router();
 router.get("/check-user/:username", async (req, res) => {
   try {
     const { username } = req.params;
-    
+
     console.log(`\n🔍 [DEBUG] Verificando usuário: ${username}`);
-    
+
     const result = await pool.query(
       "SELECT id, username, email, role, is_active, password_hash, created_at FROM users WHERE username = $1",
       [username]
     );
-    
+
     if (result.rows.length === 0) {
       console.log(`❌ [DEBUG] Usuário não encontrado`);
       return res.json({
         found: false,
-        message: "Usuário não encontrado"
+        message: "Usuário não encontrado",
       });
     }
-    
+
     const user = result.rows[0];
     console.log(`✅ [DEBUG] Usuário encontrado:`);
     console.log(`   ID: ${user.id}`);
@@ -31,8 +31,9 @@ router.get("/check-user/:username", async (req, res) => {
     console.log(`   Email: ${user.email}`);
     console.log(`   Role: ${user.role}`);
     console.log(`   Is Active: ${user.is_active}`);
-    console.log(`   Hash: ${user.password_hash.substring(0, 30)}...`);
-    
+    console.log(`   Hash Length: ${user.password_hash.length} caracteres`);
+    console.log(`   Hash Format Valid: ${user.password_hash.startsWith("$2")}`);
+
     res.json({
       found: true,
       user: {
@@ -41,10 +42,10 @@ router.get("/check-user/:username", async (req, res) => {
         email: user.email,
         role: user.role,
         is_active: user.is_active,
-        password_hash_preview: user.password_hash.substring(0, 30) + "...",
         password_hash_length: user.password_hash.length,
-        created_at: user.created_at
-      }
+        password_hash_valid: user.password_hash.startsWith("$2"),
+        created_at: user.created_at,
+      },
     });
   } catch (error) {
     console.error(`❌ [DEBUG] Erro:`, error.message);
@@ -56,33 +57,33 @@ router.get("/check-user/:username", async (req, res) => {
 router.post("/test-password", async (req, res) => {
   try {
     const { username, password } = req.body;
-    
+
     console.log(`\n🧪 [DEBUG] Testando senha para: ${username}`);
     console.log(`   Password fornecido: "${password}"`);
     console.log(`   Password length: ${password.length}`);
-    
+
     const result = await pool.query(
       "SELECT password_hash FROM users WHERE username = $1",
       [username]
     );
-    
+
     if (result.rows.length === 0) {
       console.log(`❌ [DEBUG] Usuário não encontrado`);
       return res.json({ match: false, reason: "Usuário não encontrado" });
     }
-    
+
     const hash = result.rows[0].password_hash;
-    console.log(`   Hash do banco: ${hash.substring(0, 30)}...`);
     console.log(`   Hash length: ${hash.length}`);
-    
+    console.log(`   Hash format valid: ${hash.startsWith("$2")}`);
+
     const match = await bcrypt.compare(password, hash);
     console.log(`   Bcrypt compare resultado: ${match}`);
-    
+
     res.json({
       match,
       passwordLength: password.length,
       hashLength: hash.length,
-      hashPreview: hash.substring(0, 30) + "..."
+      hashValid: hash.startsWith("$2"),
     });
   } catch (error) {
     console.error(`❌ [DEBUG] Erro:`, error.message);
@@ -94,11 +95,11 @@ router.post("/test-password", async (req, res) => {
 router.get("/database", async (req, res) => {
   try {
     console.log(`\n🗄️  [DEBUG] Verificando database...`);
-    
+
     // Versão do PostgreSQL
     const version = await pool.query("SELECT version()");
-    console.log(`   PostgreSQL: ${version.rows[0].version.split(',')[0]}`);
-    
+    console.log(`   PostgreSQL: ${version.rows[0].version.split(",")[0]}`);
+
     // Listar tabelas
     const tables = await pool.query(`
       SELECT tablename, 
@@ -107,10 +108,10 @@ router.get("/database", async (req, res) => {
       WHERE schemaname = 'public'
       ORDER BY tablename
     `);
-    
+
     console.log(`   Tabelas: ${tables.rows.length}`);
-    tables.rows.forEach(t => console.log(`      - ${t.tablename}`));
-    
+    tables.rows.forEach((t) => console.log(`      - ${t.tablename}`));
+
     // Contar usuários
     let userCount = 0;
     try {
@@ -120,11 +121,11 @@ router.get("/database", async (req, res) => {
     } catch (err) {
       console.log(`   Tabela 'users': NÃO EXISTE (código: ${err.code})`);
     }
-    
+
     res.json({
-      version: version.rows[0].version.split(',')[0],
-      tables: tables.rows.map(t => t.tablename),
-      userCount
+      version: version.rows[0].version.split(",")[0],
+      tables: tables.rows.map((t) => t.tablename),
+      userCount,
     });
   } catch (error) {
     console.error(`❌ [DEBUG] Erro:`, error.message);
@@ -138,12 +139,14 @@ router.get("/all-users", async (req, res) => {
     const result = await pool.query(
       "SELECT id, username, email, role, is_active, last_login, created_at FROM users ORDER BY id"
     );
-    
+
     console.log(`\n👥 [DEBUG] Total de usuários: ${result.rows.length}`);
-    result.rows.forEach(u => {
-      console.log(`   - ID: ${u.id}, User: ${u.username}, Role: ${u.role}, Active: ${u.is_active}`);
+    result.rows.forEach((u) => {
+      console.log(
+        `   - ID: ${u.id}, User: ${u.username}, Role: ${u.role}, Active: ${u.is_active}`
+      );
     });
-    
+
     res.json(result.rows);
   } catch (error) {
     console.error(`❌ [DEBUG] Erro:`, error.message);
@@ -152,4 +155,3 @@ router.get("/all-users", async (req, res) => {
 });
 
 export default router;
-
