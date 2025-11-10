@@ -54,13 +54,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
     container_name: warehouse-schedule-system
     ports:
       - "3333:80"
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - VITE_API_URL=http://localhost:5000/api
     depends_on:
       - backend
     networks:
