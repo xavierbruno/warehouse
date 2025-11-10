@@ -20,7 +20,7 @@ Sistema de controle de escala de trabalho para warehouse com interface moderna e
 ┌─────────────┐      ┌─────────────┐      ┌──────────────┐
 │   Frontend  │ ───> │  Backend    │ ───> │  PostgreSQL  │
 │   (React)   │      │  (Express)  │      │   Database   │
-│  Port 3333  │      │  Port 5000  │      │  Port 5432   │
+│  Port 3333  │      │  Port 5000  │      │  Port 5433   │
 └─────────────┘      └─────────────┘      └──────────────┘
 ```
 
@@ -91,7 +91,7 @@ npm run dev
 - **Frontend**: http://localhost:3333 (produção) ou http://localhost:3000 (dev)
 - **Backend API**: http://localhost:5000/api
 - **API Docs**: Ver `API.md`
-- **Database**: localhost:5432
+- **Database**: localhost:5433
 
 ## 🎯 Como Usar
 
@@ -175,7 +175,7 @@ Ver `AUTH_SETUP.md` para setup completo.
 ### Credenciais (Development)
 
 - **Host**: localhost
-- **Port**: 5432
+- **Port**: 5433
 - **Database**: warehouse_db
 - **User**: warehouse_user
 - **Password**: warehouse_pass_2024

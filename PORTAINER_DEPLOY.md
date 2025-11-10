@@ -194,7 +194,7 @@ backend:
 
 ### Erro: "Port already in use"
 
-**Problema**: Portas 3333, 5000 ou 5432 já estão em uso
+**Problema**: Portas 3333, 5000 ou 5433 já estão em uso
 
 **Solução**:
 

@@ -21,7 +21,7 @@ Pronto! 🎉
 
 ## 📦 O que foi iniciado?
 
-- ✅ PostgreSQL (porta 5432)
+- ✅ PostgreSQL (porta 5433)
 - ✅ Backend API REST (porta 5000)
 - ✅ Frontend React (porta 3333)
 - ✅ Banco de dados inicializado com schema
@@ -136,7 +136,7 @@ docker-compose up -d
 # Windows PowerShell:
 netstat -ano | findstr :3333
 netstat -ano | findstr :5000
-netstat -ano | findstr :5432
+netstat -ano | findstr :5433
 
 # Matar processo ou alterar porta no docker-compose.yml
 ```
@@ -171,7 +171,7 @@ docker-compose restart backend
 ### PostgreSQL
 
 - **Host**: localhost
-- **Port**: 5432
+- **Port**: 5433
 - **Database**: warehouse_db
 - **User**: warehouse_user
 - **Password**: warehouse_pass_2024

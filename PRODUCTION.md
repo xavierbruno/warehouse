@@ -271,7 +271,7 @@ Considere adicionar:
 5000 (ou usar proxy reverso interno)
 
 # PostgreSQL
-NUNCA expor 5432 publicamente!
+NUNCA expor 5433 publicamente!
 ```
 
 ### Configuração básica (Linux UFW)
@@ -282,7 +282,7 @@ sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 
 # Bloquear PostgreSQL de acesso externo
-sudo ufw deny 5432/tcp
+sudo ufw deny 5433/tcp
 
 # Permitir SSH (se necessário)
 sudo ufw allow 22/tcp

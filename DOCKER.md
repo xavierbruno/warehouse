@@ -11,7 +11,7 @@ Este projeto inclui configuração Docker completa com PostgreSQL, Backend API e
 
 O projeto é composto por 3 serviços principais:
 
-1. **PostgreSQL** (porta 5432) - Banco de dados relacional
+1. **PostgreSQL** (porta 5433) - Banco de dados relacional
 2. **Backend API** (porta 5000) - Node.js/Express REST API
 3. **Frontend** (porta 3333) - React app servido por Nginx
 
@@ -33,7 +33,7 @@ docker-compose up --build -d
 
 - Frontend: **http://localhost:3333**
 - Backend API: **http://localhost:5000/api**
-- PostgreSQL: **localhost:5432**
+- PostgreSQL: **localhost:5433**
 
 ### Modo Desenvolvimento (Hot-reload)
 
@@ -222,7 +222,7 @@ Para alterar credenciais do banco:
 
 ### Porta já em uso
 
-Se as portas 3333, 5000 ou 5432 já estiverem em uso, altere no `docker-compose.yml`
+Se as portas 3333, 5000 ou 5433 já estiverem em uso, altere no `docker-compose.yml`
 
 ### Backend não conecta ao PostgreSQL
 

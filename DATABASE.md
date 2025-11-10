@@ -193,7 +193,7 @@ console.log(JSON.stringify(schedules, null, 2));
 ## 🔐 Credenciais (Development)
 
 - **Host**: localhost
-- **Port**: 5432
+- **Port**: 5433
 - **Database**: warehouse_db
 - **User**: warehouse_user
 - **Password**: warehouse_pass_2024
