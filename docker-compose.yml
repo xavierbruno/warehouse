@@ -38,6 +38,8 @@ services:
       DB_NAME: warehouse_db
       DB_USER: warehouse_user
       DB_PASSWORD: warehouse_pass_2024
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-key-in-production}
+      JWT_EXPIRES_IN: 24h
     ports:
       - "5000:5000"
     depends_on:
