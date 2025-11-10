@@ -28,50 +28,122 @@ router.post(
   ],
   handleValidationErrors,
   async (req, res) => {
+    const startTime = Date.now();
+    console.log("\n" + "🔐".repeat(40));
+    console.log(`[${new Date().toISOString()}] INÍCIO DO PROCESSO DE LOGIN`);
+    console.log("🔐".repeat(40));
+    
     try {
       const { username, password } = req.body;
+      console.log(`1️⃣  [LOGIN] Username recebido: "${username}"`);
+      console.log(`2️⃣  [LOGIN] Password recebido: ${password ? '***' + password.length + ' caracteres***' : 'VAZIO'}`);
+      console.log(`3️⃣  [LOGIN] Password exato esperado: "admin123" (12 caracteres)`);
 
       // Buscar usuário
+      console.log(`\n4️⃣  [LOGIN] Executando query no banco de dados...`);
+      console.log(`   Query: SELECT * FROM users WHERE username = '${username}' AND is_active = true`);
+      
       const result = await pool.query(
         "SELECT * FROM users WHERE username = $1 AND is_active = true",
         [username]
       );
+      
+      console.log(`5️⃣  [LOGIN] Resultado: ${result.rows.length} usuário(s) encontrado(s)`);
 
       if (result.rows.length === 0) {
+        console.log(`\n❌ [LOGIN FALHOU] Motivo: Usuário não encontrado`);
+        console.log(`   Username buscado: "${username}"`);
+        console.log(`   Sugestão: Verifique se o usuário existe no banco`);
+        console.log("🔐".repeat(40) + "\n");
         return res.status(401).json({ error: "Credenciais inválidas" });
       }
 
       const user = result.rows[0];
+      console.log(`\n6️⃣  [LOGIN] Usuário encontrado no banco:`);
+      console.log(`   ID: ${user.id}`);
+      console.log(`   Username: ${user.username}`);
+      console.log(`   Email: ${user.email}`);
+      console.log(`   Role: ${user.role}`);
+      console.log(`   Is Active: ${user.is_active}`);
+      console.log(`   Password Hash: ${user.password_hash.substring(0, 20)}...`);
+      console.log(`   Hash Length: ${user.password_hash.length} caracteres`);
 
       // Verificar senha
-      const isValidPassword = await bcrypt.compare(
-        password,
-        user.password_hash
-      );
-
-      if (!isValidPassword) {
-        return res.status(401).json({ error: "Credenciais inválidas" });
+      console.log(`\n7️⃣  [LOGIN] Iniciando verificação de senha com bcrypt...`);
+      console.log(`   Password fornecido: ${password}`);
+      console.log(`   Hash do banco: ${user.password_hash.substring(0, 30)}...`);
+      console.log(`   Algoritmo: bcrypt`);
+      
+      let isValidPassword;
+      try {
+        isValidPassword = await bcrypt.compare(password, user.password_hash);
+        console.log(`8️⃣  [LOGIN] Bcrypt compare resultado: ${isValidPassword}`);
+      } catch (bcryptError) {
+        console.error(`❌ [LOGIN] Erro no bcrypt.compare:`);
+        console.error(`   Tipo: ${bcryptError.name}`);
+        console.error(`   Mensagem: ${bcryptError.message}`);
+        throw bcryptError;
       }
 
+      if (!isValidPassword) {
+        console.log(`\n❌ [LOGIN FALHOU] Motivo: Senha inválida`);
+        console.log(`   Username: ${username}`);
+        console.log(`   Password fornecido: ${password}`);
+        console.log(`   Password esperado: admin123`);
+        console.log(`   Hash no banco: ${user.password_hash.substring(0, 30)}...`);
+        console.log("🔐".repeat(40) + "\n");
+        return res.status(401).json({ error: "Credenciais inválidas" });
+      }
+      
+      console.log(`✅ [LOGIN] Senha validada com sucesso!`);
+
       // Atualizar last_login
-      await pool.query("UPDATE users SET last_login = NOW() WHERE id = $1", [
-        user.id,
-      ]);
+      console.log(`\n9️⃣  [LOGIN] Atualizando last_login no banco...`);
+      try {
+        await pool.query("UPDATE users SET last_login = NOW() WHERE id = $1", [
+          user.id,
+        ]);
+        console.log(`✅ [LOGIN] Last_login atualizado`);
+      } catch (updateError) {
+        console.error(`⚠️  [LOGIN] Erro ao atualizar last_login (não crítico):`, updateError.message);
+      }
 
       // Gerar token JWT
-      const token = jwt.sign(
-        {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-        },
-        JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN }
-      );
+      console.log(`\n🔟 [LOGIN] Gerando token JWT...`);
+      console.log(`   JWT_SECRET configurado: ${JWT_SECRET ? 'Sim' : 'NÃO!'}`);
+      console.log(`   JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}`);
+      console.log(`   Payload: { id: ${user.id}, username: ${user.username}, role: ${user.role} }`);
+      
+      let token;
+      try {
+        token = jwt.sign(
+          {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+          },
+          JWT_SECRET,
+          { expiresIn: JWT_EXPIRES_IN }
+        );
+        console.log(`✅ [LOGIN] Token JWT gerado com sucesso`);
+        console.log(`   Token (primeiros 50 chars): ${token.substring(0, 50)}...`);
+      } catch (jwtError) {
+        console.error(`❌ [LOGIN] Erro ao gerar JWT:`);
+        console.error(`   Tipo: ${jwtError.name}`);
+        console.error(`   Mensagem: ${jwtError.message}`);
+        throw jwtError;
+      }
+
+      const duration = Date.now() - startTime;
+      console.log(`\n✅✅✅ [LOGIN SUCESSO] ✅✅✅`);
+      console.log(`   Usuário: ${username}`);
+      console.log(`   Tempo total: ${duration}ms`);
+      console.log(`   Token gerado: Sim`);
+      console.log("🔐".repeat(40) + "\n");
 
       // Retornar token e dados do usuário (sem senha)
-      res.json({
+      const response = {
         token,
         user: {
           id: user.id,
@@ -80,10 +152,56 @@ router.post(
           role: user.role,
           last_login: user.last_login,
         },
+      };
+      
+      console.log(`📤 [LOGIN] Enviando resposta de sucesso:`, {
+        token: token.substring(0, 20) + '...',
+        user: response.user
       });
+      
+      res.json(response);
     } catch (error) {
-      console.error("Erro no login:", error);
-      res.status(500).json({ error: "Erro ao fazer login" });
+      const duration = Date.now() - startTime;
+      console.error("\n" + "❌".repeat(40));
+      console.error(`[${new Date().toISOString()}] ERRO NO LOGIN`);
+      console.error("❌".repeat(40));
+      console.error(`⏱️  Tempo até o erro: ${duration}ms`);
+      console.error(`🏷️  Tipo do erro: ${error.name}`);
+      console.error(`💬 Mensagem: ${error.message}`);
+      
+      if (error.code) {
+        console.error(`🔢 Código do erro: ${error.code}`);
+        
+        // Mensagens específicas por código
+        switch(error.code) {
+          case '42P01':
+            console.error(`📋 Significado: Tabela não existe`);
+            console.error(`🔧 Solução: Execute "npm run setup" no console do backend`);
+            break;
+          case '28P01':
+            console.error(`📋 Significado: Autenticação com PostgreSQL falhou`);
+            console.error(`🔧 Solução: Verifique DB_USER e DB_PASSWORD`);
+            break;
+          case 'ECONNREFUSED':
+            console.error(`📋 Significado: PostgreSQL não está acessível`);
+            console.error(`🔧 Solução: Verifique se container postgres está rodando`);
+            break;
+          default:
+            console.error(`📋 Código desconhecido: ${error.code}`);
+        }
+      }
+      
+      console.error(`\n📚 Stack trace completo:`);
+      console.error(error.stack);
+      console.error("❌".repeat(40) + "\n");
+      
+      res.status(500).json({ 
+        error: "Erro ao fazer login",
+        ...(process.env.NODE_ENV === "development" && { 
+          details: error.message,
+          code: error.code 
+        })
+      });
     }
   }
 );

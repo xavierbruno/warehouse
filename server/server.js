@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import employeesRouter from "./routes/employees.js";
 import schedulesRouter from "./routes/schedules.js";
 import authRouter from "./routes/auth.js";
+import debugRouter from "./routes/debug.js";
 import pool from "./config/database.js";
 import { authenticateToken, optionalAuth } from "./middleware/auth.js";
 
@@ -25,9 +26,33 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware de logging
+// Middleware de logging detalhado
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  const timestamp = new Date().toISOString();
+  const method = req.method;
+  const path = req.path;
+  const ip = req.ip || req.connection.remoteAddress;
+
+  console.log(`📥 [${timestamp}] ${method} ${path} - IP: ${ip}`);
+
+  // Log do body (exceto senhas)
+  if (req.body && Object.keys(req.body).length > 0) {
+    const safeBody = { ...req.body };
+    if (safeBody.password) safeBody.password = "***";
+    if (safeBody.currentPassword) safeBody.currentPassword = "***";
+    if (safeBody.newPassword) safeBody.newPassword = "***";
+    console.log(`   Body:`, safeBody);
+  }
+
+  // Log da resposta
+  const originalSend = res.send;
+  res.send = function (data) {
+    console.log(
+      `📤 [${timestamp}] ${method} ${path} - Status: ${res.statusCode}`
+    );
+    originalSend.call(this, data);
+  };
+
   next();
 });
 
@@ -52,6 +77,7 @@ app.get("/health", async (req, res) => {
 
 // Rotas da API
 app.use("/api/auth", authRouter); // Rotas de autenticação (públicas)
+app.use("/api/debug", debugRouter); // Rotas de debug (públicas - remover em produção!)
 app.use("/api/employees", authenticateToken, employeesRouter); // Protegidas
 app.use("/api/schedules", authenticateToken, schedulesRouter); // Protegidas
 
@@ -84,11 +110,48 @@ app.use((err, req, res, next) => {
 
 // Iniciar servidor
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  console.log("\n" + "=".repeat(60));
+  console.log(`🚀 Warehouse Schedule System - Backend API`);
+  console.log("=".repeat(60));
+  console.log(`📡 Servidor: http://0.0.0.0:${PORT}`);
   console.log(`📊 Ambiente: ${process.env.NODE_ENV || "development"}`);
   console.log(
     `🗄️  Database: ${process.env.DB_NAME}@${process.env.DB_HOST}:${process.env.DB_PORT}`
   );
+  console.log(
+    `🔐 JWT Secret: ${
+      process.env.JWT_SECRET ? "Configurado" : "⚠️  Usando padrão (inseguro!)"
+    }`
+  );
+  console.log(`🌐 CORS Origin: ${process.env.CORS_ORIGIN || "*"}`);
+  console.log("=".repeat(60) + "\n");
+
+  // Verificar se tabela users existe
+  pool.query("SELECT COUNT(*) FROM users", (err, res) => {
+    if (err) {
+      if (err.code === "42P01") {
+        console.log("⚠️  [SETUP] Tabela 'users' não existe!");
+        console.log(
+          "   Execute: docker exec -it warehouse-backend npm run seed"
+        );
+      } else {
+        console.error(
+          "❌ [SETUP] Erro ao verificar tabela users:",
+          err.message
+        );
+      }
+    } else {
+      console.log(
+        `✅ [SETUP] Tabela 'users' encontrada - ${res.rows[0].count} usuário(s)`
+      );
+      if (res.rows[0].count === "0") {
+        console.log("⚠️  [SETUP] Nenhum usuário encontrado!");
+        console.log(
+          "   Execute: docker exec -it warehouse-backend npm run seed"
+        );
+      }
+    }
+  });
 });
 
 // Tratamento de sinais de encerramento
