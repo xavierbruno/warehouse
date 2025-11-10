@@ -1,5 +1,5 @@
 // Configuração da API
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://213.199.59.34:5000/api";
 
 // Helper para obter token do localStorage
 const getAuthToken = () => {
