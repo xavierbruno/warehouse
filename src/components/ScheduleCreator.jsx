@@ -171,6 +171,12 @@ function ScheduleCreator() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    console.log('\n' + '='.repeat(80));
+    console.log('🚀 INICIANDO CRIAÇÃO DE SCHEDULE');
+    console.log('='.repeat(80));
+    console.log('Dados do formulário:', newSchedule);
+    
     if (
       newSchedule.employeeId &&
       newSchedule.days.length > 0 &&
@@ -183,6 +189,7 @@ function ScheduleCreator() {
       const endTimeValid = timeRegex.test(newSchedule.endTime);
 
       if (!startTimeValid || !endTimeValid) {
+        console.error('❌ VALIDAÇÃO FALHOU: Formato de horário inválido');
         showAlert(
           "Invalid Time Format",
           "Please fill in the times completely (ex: 8:00 AM, 5:00 PM)",
@@ -194,9 +201,12 @@ function ScheduleCreator() {
       // Converter horários para 24 horas
       const startTime24 = convertTo24Hour(newSchedule.startTime);
       const endTime24 = convertTo24Hour(newSchedule.endTime);
+      
+      console.log('✅ Horários convertidos:', { startTime24, endTime24 });
 
       // Validar se os horários são válidos
       if (!startTime24 || !endTime24) {
+        console.error('❌ VALIDAÇÃO FALHOU: Conversão de horário');
         showAlert("Invalid Times", "Please enter valid times", "error");
         return;
       }
@@ -263,27 +273,31 @@ function ScheduleCreator() {
       });
 
       if (conflicts.length > 0) {
-        console.log("❌ TOTAL DE CONFLITOS:", conflicts.length, conflicts);
-        const conflictMessage = conflicts
-          .map(
-            (conflict) =>
-              `📅 ${conflict.day}:\n` +
-              `👤 Employee: ${conflict.employeeName}\n` +
-              `⏰ Existing Schedule: ${conflict.existingTime}\n` +
-              `🆕 New Schedule: ${conflict.newTime}\n` +
-              `❌ These times overlap!`
-          )
-          .join("\n\n");
-
+        console.error('\n' + '❌'.repeat(40));
+        console.error('❌ CONFLITO DE HORÁRIOS DETECTADO!');
+        console.error('❌'.repeat(40));
+        console.error('Total de conflitos:', conflicts.length);
+        console.error('Detalhes:', conflicts);
+        console.error('❌'.repeat(40) + '\n');
+        
+        const conflictMsg = conflicts.map(c => 
+          `${c.day}: ${c.employeeName}\nExisting: ${c.existingTime}\nNew: ${c.newTime}`
+        ).join("\n\n");
+        
+        // ALERT NATIVO (impossível ignorar)
+        alert(`⚠️ CONFLITO DE HORÁRIO!\n\n${conflictMsg}\n\nO mesmo funcionário não pode ter horários sobrepostos no mesmo dia!`);
+        
         showAlert(
-          "⚠️ Schedule Conflict Detected!",
-          `Cannot create schedule due to time conflict:\n\n${conflictMessage}\n\nThe same employee cannot work at overlapping times on the same day.\n\nPlease choose different times or days.`,
+          "⚠️ Schedule Conflict!",
+          `Cannot create schedule:\n\n${conflictMsg}`,
           "error"
         );
-        return;
+        
+        console.error('🛑 CRIAÇÃO CANCELADA - Conflito');
+        return; // PARA AQUI
       }
 
-      console.log("✅ Nenhum conflito encontrado!");
+      console.log('✅ VALIDAÇÃO 1: Sem conflitos');
 
       // Check for visa expiry for Stamp1, Stamp2, or Stamp4 employees
       const selectedEmployee = employees.find(
@@ -314,7 +328,15 @@ function ScheduleCreator() {
         });
 
         if (visaExpiryDate < today) {
-          console.log("⚠️ VISTO EXPIRADO! Mostrando modal...");
+          console.error('\n' + '🛂'.repeat(40));
+          console.error('🛂 VISTO EXPIRADO!');
+          console.error('Funcionário:', selectedEmployee.name);
+          console.error('Expirou:', visaExpiryDate.toLocaleDateString());
+          console.error('🛂'.repeat(40) + '\n');
+          
+          // ALERT NATIVO
+          alert(`🛂 VISTO EXPIRADO!\n\nFuncionário: ${selectedEmployee.name}\nDocument: ${selectedEmployee.documentType}\nExpirou: ${visaExpiryDate.toLocaleDateString()}`);
+          
           setLimitModalData({
             employee: selectedEmployee,
             visaExpired: true,
@@ -326,8 +348,12 @@ function ScheduleCreator() {
             endTimeDisplay: newSchedule.endTime,
           });
           setShowLimitModal(true);
-          return;
+          
+          console.error('🛑 PAUSADO - Visto expirado');
+          return; // PARA AQUI
         }
+        
+        console.log('✅ VALIDAÇÃO 2: Visto OK');
       }
 
       // Check for Stamp2 employees and 20h limit
@@ -372,7 +398,15 @@ function ScheduleCreator() {
         });
 
         if (totalHours > 20) {
-          console.log("⚠️ LIMITE DE 20H EXCEDIDO! Mostrando modal...");
+          console.error('\n' + '⚠️'.repeat(40));
+          console.error('⚠️ LIMITE STAMP2 EXCEDIDO!');
+          console.error('Funcionário:', selectedEmployee.name);
+          console.error('Total:', totalHours.toFixed(2) + 'h / 20h');
+          console.error('⚠️'.repeat(40) + '\n');
+          
+          // ALERT NATIVO
+          alert(`⚠️ LIMITE EXCEDIDO!\n\nFuncionário: ${selectedEmployee.name}\nStamp2 - Limite: 20h/semana\n\nAtual: ${currentHours.toFixed(2)}h\nNovo: ${newHours.toFixed(2)}h\nTotal: ${totalHours.toFixed(2)}h\nExcesso: ${(totalHours - 20).toFixed(2)}h`);
+          
           setLimitModalData({
             employee: selectedEmployee,
             visaExpired: false,
@@ -386,10 +420,12 @@ function ScheduleCreator() {
             endTimeDisplay: newSchedule.endTime,
           });
           setShowLimitModal(true);
-          return;
-        } else {
-          console.log("✅ Dentro do limite de 20h");
+          
+          console.error('🛑 PAUSADO - Stamp2 limite');
+          return; // PARA AQUI
         }
+        
+        console.log('✅ VALIDAÇÃO 3: Stamp2 OK (' + totalHours.toFixed(2) + 'h)');
       }
 
       // Criar uma escala para cada dia selecionado
