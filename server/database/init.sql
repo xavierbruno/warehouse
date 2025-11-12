@@ -95,10 +95,5 @@ CREATE TRIGGER update_schedules_updated_at BEFORE UPDATE ON schedules
 CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON payments
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Dados de exemplo (opcional)
-INSERT INTO employees (name, department, position, hire_date, hourly_rate, email, phone, status) VALUES
-    ('João Silva', 'Warehouse', 'Operator', '2023-01-15', 25.50, 'joao.silva@example.com', '(11) 98765-4321', 'active'),
-    ('Maria Santos', 'Warehouse', 'Supervisor', '2022-06-10', 32.00, 'maria.santos@example.com', '(11) 98765-4322', 'active'),
-    ('Pedro Costa', 'Logistics', 'Coordinator', '2023-03-20', 28.75, 'pedro.costa@example.com', '(11) 98765-4323', 'active')
-ON CONFLICT DO NOTHING;
+-- Sem dados de exemplo - funcionários serão criados pela interface web
 
