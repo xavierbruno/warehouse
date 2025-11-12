@@ -226,15 +226,28 @@ function ScheduleCreator() {
             const existingStartMinutes = timeToMinutes(existingStart);
             const existingEndMinutes = timeToMinutes(existingEnd);
 
-            // Check for overlap
-            if (
+            console.log("   Comparando horários:", {
+              novo: `${startTime24} (${newStartMinutes}min) - ${endTime24} (${newEndMinutes}min)`,
+              existente: `${existingStart} (${existingStartMinutes}min) - ${existingEnd} (${existingEndMinutes}min)`,
+            });
+
+            // Check for overlap (qualquer sobreposição)
+            const hasOverlap =
               (newStartMinutes < existingEndMinutes &&
                 newEndMinutes > existingStartMinutes) ||
               (newStartMinutes === existingStartMinutes &&
-                newEndMinutes === existingEndMinutes)
-            ) {
+                newEndMinutes === existingEndMinutes);
+
+            console.log("   Resultado overlap:", hasOverlap);
+
+            if (hasOverlap) {
+              console.log("   ❌ CONFLITO DETECTADO!");
+              const dayName =
+                daysOfWeek.find((d) => d.key === day)?.name || day;
+              const employeeName = getEmployeeName(employeeId);
               conflicts.push({
-                day: day,
+                day: dayName,
+                employeeName: employeeName,
                 existingTime: `${
                   existingSchedule.startTimeDisplay ||
                   formatTime12Hour(existingStart)
@@ -250,25 +263,38 @@ function ScheduleCreator() {
       });
 
       if (conflicts.length > 0) {
+        console.log("❌ TOTAL DE CONFLITOS:", conflicts.length, conflicts);
         const conflictMessage = conflicts
           .map(
             (conflict) =>
-              `${conflict.day}: Existing ${conflict.existingTime} conflicts with new ${conflict.newTime}`
+              `📅 ${conflict.day}:\n` +
+              `👤 Employee: ${conflict.employeeName}\n` +
+              `⏰ Existing Schedule: ${conflict.existingTime}\n` +
+              `🆕 New Schedule: ${conflict.newTime}\n` +
+              `❌ These times overlap!`
           )
-          .join("\n");
+          .join("\n\n");
 
         showAlert(
-          "Schedule Conflicts Detected",
-          `The following conflicts were found:\n\n${conflictMessage}\n\nPlease choose different times or days.`,
-          "warning"
+          "⚠️ Schedule Conflict Detected!",
+          `Cannot create schedule due to time conflict:\n\n${conflictMessage}\n\nThe same employee cannot work at overlapping times on the same day.\n\nPlease choose different times or days.`,
+          "error"
         );
         return;
       }
+
+      console.log("✅ Nenhum conflito encontrado!");
 
       // Check for visa expiry for Stamp1, Stamp2, or Stamp4 employees
       const selectedEmployee = employees.find(
         (emp) => emp.id === parseInt(newSchedule.employeeId)
       );
+
+      console.log("🔍 Verificando visto do funcionário:", {
+        employee: selectedEmployee?.name,
+        documentType: selectedEmployee?.documentType,
+        visaExpiryDate: selectedEmployee?.visaExpiryDate,
+      });
 
       if (
         selectedEmployee &&
@@ -281,7 +307,14 @@ function ScheduleCreator() {
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
 
+        console.log("📅 Verificando expiração:", {
+          visaExpiry: visaExpiryDate.toISOString(),
+          today: today.toISOString(),
+          expired: visaExpiryDate < today,
+        });
+
         if (visaExpiryDate < today) {
+          console.log("⚠️ VISTO EXPIRADO! Mostrando modal...");
           setLimitModalData({
             employee: selectedEmployee,
             visaExpired: true,
@@ -299,6 +332,11 @@ function ScheduleCreator() {
 
       // Check for Stamp2 employees and 20h limit
       if (selectedEmployee && selectedEmployee.documentType === "Stamp2") {
+        console.log(
+          "🔍 Verificando limite de 20h para Stamp2:",
+          selectedEmployee.name
+        );
+
         // Calculate current weekly hours for this employee
         const currentWeekKey = getWeekKey(selectedWeek);
         const weekSchedules = schedules[currentWeekKey] || {};
@@ -313,10 +351,9 @@ function ScheduleCreator() {
             if (
               parseInt(scheduleEmployeeId) === parseInt(newSchedule.employeeId)
             ) {
-              currentHours += calculateHours(
-                scheduleStartTime,
-                scheduleEndTime
-              );
+              const hours = calculateHours(scheduleStartTime, scheduleEndTime);
+              currentHours += hours;
+              console.log(`   + ${hours.toFixed(2)}h de escala existente`);
             }
           });
         });
@@ -326,9 +363,19 @@ function ScheduleCreator() {
           calculateHours(startTime24, endTime24) * newSchedule.days.length;
         const totalHours = currentHours + newHours;
 
+        console.log("📊 Cálculo de horas Stamp2:", {
+          currentHours: currentHours.toFixed(2),
+          newHours: newHours.toFixed(2),
+          totalHours: totalHours.toFixed(2),
+          limit: 20,
+          exceedsLimit: totalHours > 20,
+        });
+
         if (totalHours > 20) {
+          console.log("⚠️ LIMITE DE 20H EXCEDIDO! Mostrando modal...");
           setLimitModalData({
             employee: selectedEmployee,
+            visaExpired: false,
             currentHours,
             newHours,
             totalHours,
@@ -340,6 +387,8 @@ function ScheduleCreator() {
           });
           setShowLimitModal(true);
           return;
+        } else {
+          console.log("✅ Dentro do limite de 20h");
         }
       }
 

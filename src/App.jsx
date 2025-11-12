@@ -70,7 +70,7 @@ function Navigation() {
           gap: "15px",
         }}
       >
-        <span style={{ fontSize: "14px", color: "#666" }}>
+        <span style={{ fontSize: "14px", color: "#FFD700", fontWeight: "600" }}>
           👤 {user?.username}
         </span>
         <button
