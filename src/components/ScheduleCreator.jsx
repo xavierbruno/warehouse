@@ -211,10 +211,14 @@ function ScheduleCreator() {
         const employeeId = parseInt(newSchedule.employeeId);
 
         daySchedules.forEach((existingSchedule) => {
-          if (parseInt(existingSchedule.employeeId) === employeeId) {
+          const existingEmployeeId =
+            existingSchedule.employee_id || existingSchedule.employeeId;
+          if (parseInt(existingEmployeeId) === employeeId) {
             // Check if the new schedule conflicts with existing one
-            const existingStart = existingSchedule.startTime;
-            const existingEnd = existingSchedule.endTime;
+            const existingStart =
+              existingSchedule.start_time || existingSchedule.startTime;
+            const existingEnd =
+              existingSchedule.end_time || existingSchedule.endTime;
 
             // Convert to comparable format (minutes since midnight)
             const newStartMinutes = timeToMinutes(startTime24);
@@ -302,12 +306,16 @@ function ScheduleCreator() {
 
         Object.values(weekSchedules).forEach((daySchedules) => {
           daySchedules.forEach((schedule) => {
+            const scheduleEmployeeId =
+              schedule.employee_id || schedule.employeeId;
+            const scheduleStartTime = schedule.start_time || schedule.startTime;
+            const scheduleEndTime = schedule.end_time || schedule.endTime;
             if (
-              parseInt(schedule.employeeId) === parseInt(newSchedule.employeeId)
+              parseInt(scheduleEmployeeId) === parseInt(newSchedule.employeeId)
             ) {
               currentHours += calculateHours(
-                schedule.startTime,
-                schedule.endTime
+                scheduleStartTime,
+                scheduleEndTime
               );
             }
           });
@@ -338,24 +346,34 @@ function ScheduleCreator() {
       // Criar uma escala para cada dia selecionado
       newSchedule.days.forEach((day) => {
         const schedule = {
-          employeeId: newSchedule.employeeId,
-          startTime: startTime24,
-          endTime: endTime24,
-          startTimeDisplay: newSchedule.startTime, // Manter formato 12h para exibição
-          endTimeDisplay: newSchedule.endTime, // Manter formato 12h para exibição
-          id: Date.now() + Math.random(), // ID único para cada escala
-          weekKey: currentWeekKey,
+          employee_id: parseInt(newSchedule.employeeId), // API espera snake_case
+          start_time: startTime24,
+          end_time: endTime24,
+          break_minutes: 0, // Padrão
+          notes: `${newSchedule.startTime} - ${newSchedule.endTime}`, // Salvar horário display
         };
 
+        console.log("🚀 Criando escala:", {
+          weekKey: currentWeekKey,
+          day,
+          schedule,
+        });
         addSchedule(currentWeekKey, day, schedule);
       });
 
       setNewSchedule({
         employeeId: "",
         days: [],
-        startTime: "",
-        endTime: "",
+        startTime: "7:00 PM",
+        endTime: "3:00 AM",
       });
+
+      // Mostrar mensagem de sucesso
+      showAlert(
+        "Schedule Created",
+        `Schedule added successfully for ${newSchedule.days.length} day(s)!`,
+        "success"
+      );
     }
   };
 
@@ -435,15 +453,18 @@ function ScheduleCreator() {
 
       limitModalData.days.forEach((day) => {
         const schedule = {
-          employeeId: limitModalData.employee.id,
-          startTime: limitModalData.startTime,
-          endTime: limitModalData.endTime,
-          startTimeDisplay: limitModalData.startTimeDisplay,
-          endTimeDisplay: limitModalData.endTimeDisplay,
-          id: Date.now() + Math.random(),
-          weekKey: currentWeekKey,
+          employee_id: parseInt(limitModalData.employee.id),
+          start_time: limitModalData.startTime,
+          end_time: limitModalData.endTime,
+          break_minutes: 0,
+          notes: `${limitModalData.startTimeDisplay} - ${limitModalData.endTimeDisplay}`,
         };
 
+        console.log("🚀 Criando escala (limit exceed):", {
+          weekKey: currentWeekKey,
+          day,
+          schedule,
+        });
         addSchedule(currentWeekKey, day, schedule);
       });
 
@@ -848,13 +869,18 @@ function ScheduleCreator() {
                 </p>
               ) : (
                 daySchedules.map((schedule) => {
+                  const scheduleStartTime =
+                    schedule.start_time || schedule.startTime;
+                  const scheduleEndTime = schedule.end_time || schedule.endTime;
+                  const scheduleEmployeeId =
+                    schedule.employee_id || schedule.employeeId;
                   const hours = calculateHours(
-                    schedule.startTime,
-                    schedule.endTime
+                    scheduleStartTime,
+                    scheduleEndTime
                   );
                   return (
                     <div key={schedule.id} className="schedule-item">
-                      <strong>{getEmployeeName(schedule.employeeId)}</strong>
+                      <strong>{getEmployeeName(scheduleEmployeeId)}</strong>
                       <br />
                       {editingSchedule === schedule.id ? (
                         <div style={{ margin: "10px 0" }}>
@@ -917,15 +943,29 @@ function ScheduleCreator() {
                         <>
                           <span>
                             {schedule.startTimeDisplay ||
-                              formatTime12Hour(schedule.startTime)}{" "}
+                              formatTime12Hour(scheduleStartTime)}{" "}
                             -{" "}
                             {schedule.endTimeDisplay ||
-                              formatTime12Hour(schedule.endTime)}
+                              formatTime12Hour(scheduleEndTime)}
                           </span>
                           <br />
                           <span style={{ fontSize: "12px", color: "#666" }}>
                             {hours.toFixed(1)}h
                           </span>
+                          {schedule.notes && (
+                            <>
+                              <br />
+                              <span
+                                style={{
+                                  fontSize: "11px",
+                                  color: "#888",
+                                  fontStyle: "italic",
+                                }}
+                              >
+                                {schedule.notes}
+                              </span>
+                            </>
+                          )}
                           <div
                             style={{
                               display: "flex",

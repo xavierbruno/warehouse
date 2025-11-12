@@ -49,11 +49,23 @@ export const useSchedules = () => {
 
   const addSchedule = async (weekKey, dayKey, schedule) => {
     try {
-      const newSchedule = await schedulesAPI.create({
-        ...schedule,
+      console.log("📤 [useSchedules] Enviando para API:", {
         week_key: weekKey,
         day_key: dayKey,
+        ...schedule,
       });
+
+      const newSchedule = await schedulesAPI.create({
+        employee_id: schedule.employee_id,
+        week_key: weekKey,
+        day_key: dayKey,
+        start_time: schedule.start_time,
+        end_time: schedule.end_time,
+        break_minutes: schedule.break_minutes || 0,
+        notes: schedule.notes || "",
+      });
+
+      console.log("✅ [useSchedules] Escala criada com sucesso:", newSchedule);
 
       setSchedules((prev) => ({
         ...prev,
@@ -65,7 +77,8 @@ export const useSchedules = () => {
 
       return newSchedule;
     } catch (err) {
-      console.error("Erro ao adicionar escala:", err);
+      console.error("❌ [useSchedules] Erro ao adicionar escala:", err);
+      alert(`Erro ao criar escala: ${err.message}`);
       throw err;
     }
   };
