@@ -45,31 +45,76 @@ const fetchAPI = async (endpoint, options = {}) => {
   }
 };
 
+// Converter camelCase para snake_case para enviar à API
+const toSnakeCase = (obj) => {
+  const snakeObj = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (key === "documentType") {
+      snakeObj["document_type"] = value;
+    } else if (key === "visaExpiryDate") {
+      snakeObj["visa_expiry"] = value;
+    } else if (key === "birthDate") {
+      snakeObj["hire_date"] = value;
+    } else {
+      snakeObj[key] = value;
+    }
+  }
+  return snakeObj;
+};
+
+// Converter snake_case para camelCase vindo da API
+const toCamelCase = (obj) => {
+  const camelObj = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (key === "document_type") {
+      camelObj["documentType"] = value;
+    } else if (key === "visa_expiry") {
+      camelObj["visaExpiryDate"] = value;
+    } else if (key === "hire_date") {
+      camelObj["birthDate"] = value;
+    } else {
+      camelObj[key] = value;
+    }
+  }
+  return camelObj;
+};
+
 // API de Funcionários
 export const employeesAPI = {
   // Listar todos os funcionários
   getAll: async () => {
-    return fetchAPI("/employees");
+    const employees = await fetchAPI("/employees");
+    console.log("📥 Employees RAW da API:", employees);
+    const converted = employees.map((emp) => ({ ...emp, ...toCamelCase(emp) }));
+    console.log("📥 Employees CONVERTIDOS:", converted);
+    return converted;
   },
 
   // Buscar funcionário por ID
   getById: async (id) => {
-    return fetchAPI(`/employees/${id}`);
+    const employee = await fetchAPI(`/employees/${id}`);
+    return { ...employee, ...toCamelCase(employee) };
   },
 
   // Criar novo funcionário
   create: async (employeeData) => {
+    console.log("📤 CREATE Employee (camelCase):", employeeData);
+    const snakeData = toSnakeCase(employeeData);
+    console.log("📤 CREATE Employee (snake_case):", snakeData);
     return fetchAPI("/employees", {
       method: "POST",
-      body: JSON.stringify(employeeData),
+      body: JSON.stringify(snakeData),
     });
   },
 
   // Atualizar funcionário
   update: async (id, employeeData) => {
+    console.log("📤 UPDATE Employee (camelCase):", employeeData);
+    const snakeData = toSnakeCase(employeeData);
+    console.log("📤 UPDATE Employee (snake_case):", snakeData);
     return fetchAPI(`/employees/${id}`, {
       method: "PUT",
-      body: JSON.stringify(employeeData),
+      body: JSON.stringify(snakeData),
     });
   },
 

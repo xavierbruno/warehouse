@@ -62,6 +62,8 @@ router.post(
     body("hourly_rate").optional().isFloat({ min: 0 }),
     body("email").optional().isEmail(),
     body("phone").optional().trim(),
+    body("document_type").optional().trim(),
+    body("visa_expiry").optional().isISO8601().toDate(),
   ],
   handleValidationErrors,
   async (req, res) => {
@@ -74,15 +76,35 @@ router.post(
         hourly_rate,
         email,
         phone,
+        document_type,
+        visa_expiry,
       } = req.body;
 
+      console.log("📝 Criando funcionário:", {
+        name,
+        document_type,
+        visa_expiry,
+        allData: req.body,
+      });
+
       const result = await pool.query(
-        `INSERT INTO employees (name, department, position, hire_date, hourly_rate, email, phone)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO employees (name, department, position, hire_date, hourly_rate, email, phone, document_type, visa_expiry)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING *`,
-        [name, department, position, hire_date, hourly_rate, email, phone]
+        [
+          name,
+          department,
+          position,
+          hire_date,
+          hourly_rate,
+          email,
+          phone,
+          document_type,
+          visa_expiry,
+        ]
       );
 
+      console.log("✅ Funcionário criado:", result.rows[0]);
       res.status(201).json(result.rows[0]);
     } catch (error) {
       console.error("Erro ao criar funcionário:", error);
@@ -103,6 +125,8 @@ router.put(
     body("hourly_rate").optional().isFloat({ min: 0 }),
     body("email").optional().isEmail(),
     body("phone").optional().trim(),
+    body("document_type").optional().trim(),
+    body("visa_expiry").optional().isISO8601().toDate(),
     body("status").optional().isIn(["active", "inactive"]),
   ],
   handleValidationErrors,
