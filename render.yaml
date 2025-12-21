@@ -1,0 +1,26 @@
+# Render Blueprint para deploy do backend
+# Acesse: https://render.com → New → Blueprint → Import this repository
+
+services:
+  - type: web
+    name: warehouse-backend
+    env: node
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: SUPABASE_DB_URL
+        sync: false  # Configure manualmente no dashboard
+      - key: SUPABASE_SSL
+        value: true
+      - key: JWT_SECRET
+        generateValue: true  # Render gera automaticamente
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: CORS_ORIGIN
+        sync: false  # Configure após ter URL do frontend
+

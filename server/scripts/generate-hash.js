@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 
-// Gerar hash para a senha admin123
-const password = "admin123";
+// Gerar hash para a senha GLS2025
+const password = "GLS2025";
 const saltRounds = 10;
 
 bcrypt.hash(password, saltRounds, (err, hash) => {

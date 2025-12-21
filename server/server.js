@@ -2,15 +2,21 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
+
+// Carregar variáveis de ambiente PRIMEIRO (antes de importar database.js)
+// Procura .env na raiz do projeto (../ do diretório server)
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, "..", ".env") });
+
 import employeesRouter from "./routes/employees.js";
 import schedulesRouter from "./routes/schedules.js";
 import authRouter from "./routes/auth.js";
 import debugRouter from "./routes/debug.js";
 import pool from "./config/database.js";
 import { authenticateToken, optionalAuth } from "./middleware/auth.js";
-
-// Carregar variáveis de ambiente
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -115,9 +121,15 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log("=".repeat(60));
   console.log(`📡 Servidor: http://0.0.0.0:${PORT}`);
   console.log(`📊 Ambiente: ${process.env.NODE_ENV || "development"}`);
-  console.log(
-    `🗄️  Database: ${process.env.DB_NAME}@${process.env.DB_HOST}:${process.env.DB_PORT}`
-  );
+  // Mostrar informações do banco de dados
+  if (process.env.SUPABASE_DB_URL) {
+    const dbUrl = process.env.SUPABASE_DB_URL.replace(/:[^:@]+@/, ':****@');
+    console.log(`🗄️  Database: Supabase (${dbUrl.substring(0, 60)}...)`);
+  } else {
+    console.log(
+      `🗄️  Database: ${process.env.DB_NAME || "warehouse_db"}@${process.env.DB_HOST || "postgres"}:${process.env.DB_PORT || 5432}`
+    );
+  }
   console.log(
     `🔐 JWT Secret: ${
       process.env.JWT_SECRET ? "Configurado" : "⚠️  Usando padrão (inseguro!)"

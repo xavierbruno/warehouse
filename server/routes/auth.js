@@ -89,7 +89,7 @@ router.post(
       if (!isValidPassword) {
         console.log(`\n❌ [LOGIN FALHOU] Motivo: Senha não coincide`);
         console.log(`   Username: ${username}`);
-        console.log(`   Senha esperada: admin123`);
+        console.log(`   Senha esperada: GLS2025`);
         console.log("🔐".repeat(40) + "\n");
         return res.status(401).json({ error: "Credenciais inválidas" });
       }

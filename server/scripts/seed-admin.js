@@ -4,7 +4,7 @@ async function seedAdmin() {
   try {
     const username = "admin";
     const email = "admin@warehouse.com";
-    const password = "admin123"; // Senha em texto puro
+    const password = "GLS2025"; // Senha em texto puro
 
     // Verificar se usuário já existe
     const existingUser = await pool.query(
@@ -14,7 +14,7 @@ async function seedAdmin() {
 
     if (existingUser.rows.length > 0) {
       console.log("✅ Usuário admin já existe");
-      console.log("   Atualizando senha para 'admin123'...");
+      console.log("   Atualizando senha para 'GLS2025'...");
 
       // Atualizar senha
       await pool.query("UPDATE users SET password = $1 WHERE username = $2", [

@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
+// Configuração da API
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 const AuthContext = createContext(null);
 
 export const useAuth = () => {
@@ -30,7 +33,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await fetch("http://213.199.59.34:5000/api/auth/login", {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -20,7 +20,7 @@ CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 
 -- Inserir usuário admin padrão
 INSERT INTO users (username, email, password, role) VALUES
-    ('admin', 'admin@warehouse.com', 'admin123', 'admin')
+    ('admin', 'admin@warehouse.com', 'GLS2025', 'admin')
 ON CONFLICT (username) DO NOTHING;
 
 -- Tabela de Funcionários
@@ -33,6 +33,9 @@ CREATE TABLE IF NOT EXISTS employees (
     hourly_rate DECIMAL(10, 2),
     email VARCHAR(255),
     phone VARCHAR(20),
+    document_type VARCHAR(50),
+    visa_expiry DATE,
+    birth_date DATE,
     status VARCHAR(20) DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

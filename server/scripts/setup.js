@@ -53,18 +53,18 @@ async function setup() {
       console.log("   ⚠️  Usuário admin já existe. Atualizando senha...");
 
       await pool.query("UPDATE users SET password = $1 WHERE username = $2", [
-        "admin123",
+        "GLS2025",
         "admin",
       ]);
 
-      console.log("   ✅ Senha atualizada para 'admin123'");
+      console.log("   ✅ Senha atualizada para 'GLS2025'");
       console.log(`      ID: ${existingUser.rows[0].id}`);
       console.log(`      Email: ${existingUser.rows[0].email}`);
       console.log(`      Role: ${existingUser.rows[0].role}\n`);
     } else {
       console.log("   ⚠️  Usuário admin não existe. Criando...");
 
-      const password = "admin123";
+      const password = "GLS2025";
 
       await pool.query(
         `INSERT INTO users (username, email, password, role) 
@@ -74,7 +74,7 @@ async function setup() {
 
       console.log("   ✅ Usuário admin criado:");
       console.log(`      Username: admin`);
-      console.log(`      Password: admin123`);
+      console.log(`      Password: GLS2025`);
       console.log(`      Email: admin@warehouse.com\n`);
     }
 
@@ -105,7 +105,7 @@ async function setup() {
     console.log("=".repeat(60));
     console.log("\n🎯 Sistema pronto para uso:");
     console.log("   Login: admin");
-    console.log("   Senha: admin123");
+    console.log("   Senha: GLS2025");
     console.log("\n⚠️  IMPORTANTE: Altere a senha em produção!\n");
 
     process.exit(0);

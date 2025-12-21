@@ -51,7 +51,22 @@ Sistema de controle de escala de trabalho para warehouse com interface moderna e
 
 ## 🚀 Quick Start
 
-### Com Docker (Recomendado)
+### Com Supabase (Banco Online - Recomendado para Produção)
+
+Veja o guia completo em `QUICKSTART_SUPABASE.md`:
+
+```bash
+# 1. Configure .env com a connection string do Supabase
+SUPABASE_DB_URL=postgresql://postgres:senha@db.xxxxx.supabase.co:5432/postgres
+
+# 2. Execute o SQL no Supabase (SQL Editor)
+# Copie o conteúdo de server/database/supabase-migration.sql
+
+# 3. Suba os serviços
+docker-compose -f docker-compose.supabase.yml up -d
+```
+
+### Com Docker (PostgreSQL Local)
 
 ```bash
 # 1. Iniciar toda a stack (PostgreSQL + Backend + Frontend)
@@ -68,7 +83,7 @@ docker exec -it warehouse-backend npm run seed
 
 # Acessar
 # Frontend: http://localhost:3333
-# Login: admin / admin123
+# Login: admin / GLS2025
 ```
 
 ### Desenvolvimento Local
@@ -155,7 +170,7 @@ O sistema possui autenticação JWT completa.
 **Credenciais padrão:**
 
 - **Usuário**: `admin`
-- **Senha**: `admin123`
+- **Senha**: `GLS2025`
 
 ⚠️ **Importante**: Altere a senha após o primeiro login!
 

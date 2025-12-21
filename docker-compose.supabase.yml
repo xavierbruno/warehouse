@@ -1,0 +1,51 @@
+# Docker Compose para usar com Supabase
+# Use: docker-compose -f docker-compose.supabase.yml up -d
+
+version: "3.8"
+
+services:
+  # Backend API (sem dependência do PostgreSQL local)
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: warehouse-backend
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      # Supabase
+      SUPABASE_DB_URL: ${SUPABASE_DB_URL}
+      SUPABASE_SSL: ${SUPABASE_SSL:-true}
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-key-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      # CORS
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    ports:
+      - "5000:5000"
+    networks:
+      - warehouse-network
+    restart: unless-stopped
+
+  # Frontend (Produção)
+  warehouse-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
+    container_name: warehouse-schedule-system
+    ports:
+      - "3333:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    networks:
+      - warehouse-network
+
+networks:
+  warehouse-network:
+    driver: bridge
+

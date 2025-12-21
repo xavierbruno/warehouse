@@ -184,7 +184,7 @@ const Login = () => {
           <br />
           Usuário: <code style={{ color: "#667eea" }}>admin</code>
           <br />
-          Senha: <code style={{ color: "#667eea" }}>admin123</code>
+          Senha: <code style={{ color: "#667eea" }}>GLS2025</code>
         </div>
       </div>
     </div>

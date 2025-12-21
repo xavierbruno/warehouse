@@ -64,6 +64,7 @@ router.post(
     body("phone").optional().trim(),
     body("document_type").optional().trim(),
     body("visa_expiry").optional().isISO8601().toDate(),
+    body("birth_date").optional().isISO8601().toDate(),
   ],
   handleValidationErrors,
   async (req, res) => {
@@ -78,18 +79,20 @@ router.post(
         phone,
         document_type,
         visa_expiry,
+        birth_date,
       } = req.body;
 
       console.log("📝 Criando funcionário:", {
         name,
         document_type,
         visa_expiry,
+        birth_date,
         allData: req.body,
       });
 
       const result = await pool.query(
-        `INSERT INTO employees (name, department, position, hire_date, hourly_rate, email, phone, document_type, visa_expiry)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO employees (name, department, position, hire_date, hourly_rate, email, phone, document_type, visa_expiry, birth_date)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING *`,
         [
           name,
@@ -101,6 +104,7 @@ router.post(
           phone,
           document_type,
           visa_expiry,
+          birth_date,
         ]
       );
 
@@ -127,6 +131,7 @@ router.put(
     body("phone").optional().trim(),
     body("document_type").optional().trim(),
     body("visa_expiry").optional().isISO8601().toDate(),
+    body("birth_date").optional().isISO8601().toDate(),
     body("status").optional().isIn(["active", "inactive"]),
   ],
   handleValidationErrors,

@@ -54,7 +54,7 @@ const toSnakeCase = (obj) => {
     } else if (key === "visaExpiryDate") {
       snakeObj["visa_expiry"] = value;
     } else if (key === "birthDate") {
-      snakeObj["hire_date"] = value;
+      snakeObj["birth_date"] = value;
     } else {
       snakeObj[key] = value;
     }
@@ -70,8 +70,10 @@ const toCamelCase = (obj) => {
       camelObj["documentType"] = value;
     } else if (key === "visa_expiry") {
       camelObj["visaExpiryDate"] = value;
-    } else if (key === "hire_date") {
+    } else if (key === "birth_date") {
       camelObj["birthDate"] = value;
+    } else if (key === "hire_date") {
+      camelObj["hireDate"] = value;
     } else {
       camelObj[key] = value;
     }

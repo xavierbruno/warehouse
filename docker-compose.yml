@@ -33,16 +33,24 @@ services:
     environment:
       NODE_ENV: production
       PORT: 5000
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: warehouse_db
-      DB_USER: warehouse_user
-      DB_PASSWORD: warehouse_pass_2024
+      # Supabase (se definido, usa Supabase; caso contrário, usa PostgreSQL local)
+      SUPABASE_DB_URL: ${SUPABASE_DB_URL:-}
+      SUPABASE_SSL: ${SUPABASE_SSL:-true}
+      # PostgreSQL local (usado apenas se SUPABASE_DB_URL não estiver definido)
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-warehouse_db}
+      DB_USER: ${DB_USER:-warehouse_user}
+      DB_PASSWORD: ${DB_PASSWORD:-warehouse_pass_2024}
+      # JWT
       JWT_SECRET: ${JWT_SECRET:-change-this-secret-key-in-production}
-      JWT_EXPIRES_IN: 24h
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      # CORS
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
     ports:
       - "5000:5000"
     depends_on:
+      # Se estiver usando Supabase, comente a linha abaixo
       postgres:
         condition: service_healthy
     networks:
@@ -55,7 +63,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://213.199.59.34:5000/api}
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
     container_name: warehouse-schedule-system
     ports:
       - "3333:80"
